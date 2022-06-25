@@ -15,26 +15,85 @@ bus = None  # declaring global? idk
 no abbreviations because temp might mean temperature or temporary
 """
 
-
-def main():
-    """
+"""
     CPU soft-throttle is at 60c, hard-throttle at 80c
     recommended curve is 0=3 60=100, right?
 
+    #background
+    a computer uses an unknown amount of power and outputs an equal amount of heat
+    fan removes heat
+    delta T is proportional to power/airflow
+    delta T also depends on room temp, which we do not know
+    there are also delays and non-linearity mixed in
+
+    delays lead to oscillation, non=linearity leads to oscillation
+
+    if we knew room temp, power, heatsink characteristics, fan characteristics,
+    we could set a
+
     # Design constraints
-    oscillating fan speed is annoying
-    don't run at 100% unless cpu is at maxtemp
-    don't run at idle% unless cpu is at mintemp
+    don't constantly change fan speed
     be fail-safe
+    find set point
 
 
     like, what is the goal with fan curves anyway? be as quiet as possible for a given acceptable wear rate
     is wear proportional to temperature?
 
-
+"""
+"""
     ok so with going between no fan and lowest speed
 
+    heat removal rate at minspeed: 1 degree/cpu-watt
+    heat removal rate at fan off:  2 degree/cpu-watt
+        fan  pass
+    wat delT delT
+    0   0   0
+    1   1   2
+    2   2   4
+    3   3   6
+
+    at 2 watts, if transition at 3 degrees, oscillation
+    at 1 watts, if transition at 1.5 degrees, oscillation
+
+    hypothetical code: keep fan off until 10 degrees
+        10 degrees passive implies minimum 5 watts
+        5 watts lets fan bring down to 5 degrees
+        fan should stay on until temp < 4.9 degrees
+            now we have less than 5 watts
+            turn off fan
+    conclusion: knowing ratio of efficacy allows calculation of hysteresis
+
+    
     """
+"""
+    main algorithm:
+    60c+ = 100%
+    
+    target temp 55c
+    if under slowly decrease
+    if over slowly increase
+    if at 60 jump to 100%
+    
+    slow ramp down
+    unless temp rises
+    
+    fanless up to 59?
+    then fans stay on until well under max wattage for no fan
+"""
+
+"""
+    algorithm: estimate wattage
+    deltaT = power/fan speed
+    power = deltaT*fan speed
+    new fan speed = power/max_deltaT
+    
+    
+    
+"""
+
+
+def main():
     global bus
     rev = GPIO.RPI_REVISION
     if rev == 2 or rev == 3:
