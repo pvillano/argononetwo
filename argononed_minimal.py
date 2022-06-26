@@ -71,41 +71,43 @@ def set_fan(fan_speed: float):
 
 
 def temp_check():
+    # todo: hysteresis for very discrete fan speeds at low numbers
+    # todo: multiple temperature measurements averaged together
     max_temp = 60
     fan_off = 40
     fan_on = 50
     min_speed = 1
-    max_acceleration = 1  # % fan speed per second
+    max_acceleration = .01  # % fan speed per second
     update_interval = 1
-
+    assert fan_off < fan_on  # hysteresis
     set_fan(100)
     current_speed = 100
     time.sleep(update_interval)
     while True:
         current_temperature = get_temp()
         if current_temperature < fan_off:
-            set_fan(0)
-            current_speed = 0
+            target_speed = 0
         elif current_temperature >= fan_on:
 
             percent_fan = unlerp(fan_on, max_temp, current_temperature)
             target_speed = lerp(min_speed, 100, percent_fan)
 
-            if target_speed >= current_speed:
-                set_fan(target_speed)
-                current_speed = target_speed
-            else:
+            if target_speed < current_speed:
                 # only go down a little
-                new_target_speed = current_speed - max_acceleration * update_interval
+                new_target_speed = current_speed * (1 - max_acceleration) * update_interval
                 # don't overshoot
                 target_speed = max(new_target_speed, target_speed)
-                set_fan(target_speed)
-                current_speed = target_speed
         else:  # fan in critical zone
             if current_speed != 0:
-                set_fan(min_speed)
-                current_speed = min_speed
-        print(current_temperature, current_speed)
+                # only go down a little
+                new_target_speed = current_speed * (1 - max_acceleration) * update_interval
+                # don't overshoot
+                target_speed = max(new_target_speed, min_speed)
+            else:
+                target_speed = 0
+        set_fan(target_speed)
+        current_speed = target_speed
+        print(current_temperature, current_speed, target_speed)
         time.sleep(update_interval)
 
 
