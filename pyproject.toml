@@ -8,6 +8,7 @@ authors = ["Peter (Rocky) Villano <peter.s.villano@gmail.com>"]
 python = "^3.10"
 black = "^22.3.0"
 fake-rpi = "^0.7.1"
+pytest = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 

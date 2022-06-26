@@ -202,5 +202,5 @@ def unlerp(a, b, x):
     return (x - a) / (b - a)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
