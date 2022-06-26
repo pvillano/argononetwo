@@ -167,19 +167,6 @@ def set_fan(fan_speed: int):
     bus.write_byte(FAN_BUS_ADDRESSS, fan_speed)
 
 
-def interpolate(value, spline):
-    if value <= spline[0][0]:
-        return spline[0][1]
-    elif value >= spline[-1][0]:
-        return spline[-1][1]
-    else:
-        for left, right in zip(spline, spline[1:]):
-            if left[0] <= value <= right[0]:
-                t = unlerp(left[0], right[0], spline)
-                return lerp(left[1], right[1], t)
-    raise ValueError
-
-
 def temp_check():
     parsed_config = parse_config_file("/etc/argononed.conf")
     if not parsed_config:
@@ -192,6 +179,19 @@ def temp_check():
         target_speed = interpolate(current_temperature, parsed_config)
         set_fan(target_speed)
         time.sleep(1)
+
+
+def interpolate(value, spline):
+    if value <= spline[0][0]:
+        return spline[0][1]
+    elif value >= spline[-1][0]:
+        return spline[-1][1]
+    else:
+        for left, right in zip(spline, spline[1:]):
+            if left[0] <= value <= right[0]:
+                t = unlerp(left[0], right[0], value)
+                return lerp(left[1], right[1], t)
+    raise ValueError
 
 
 def lerp(a, b, t):
