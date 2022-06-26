@@ -32,10 +32,11 @@ def main():
     try:
         t1.start()
         t2.start()
-    except:
+    except Exception as e:
         # t1.stop()
         # t2.stop()
         GPIO.cleanup()
+        raise e
 
 
 def shutdown_check():
@@ -59,13 +60,13 @@ def get_temp() -> float:
         temp = f.readline()
         f.close()
         return int(temp) / 1000
-    except IOError:
-        raise ValueError  # idk
+    except IOError as e:
+        raise ValueError("Could not open thermal sensor file") from e
 
 
-def set_fan(fan_speed: int):
+def set_fan(fan_speed: float):
     if fan_speed > 100 or fan_speed < 0:
-        raise ValueError
+        raise ValueError(f"Invalid fan speed {fan_speed}")
     bus.write_byte(FAN_BUS_ADDRESSS, int(fan_speed))
 
 
@@ -74,28 +75,31 @@ def temp_check():
     fan_off = 40
     fan_on = 50
     min_speed = 1
-    max_acceleration = 1  # .1 % fan speed per second
+    max_acceleration = 1  # % fan speed per second
     update_interval = 1
 
+    set_fan(100)
     current_speed = 100
-    set_fan(current_speed)
     time.sleep(update_interval)
     while True:
         current_temperature = get_temp()
         if current_temperature < fan_off:
             set_fan(0)
             current_speed = 0
-        elif current_temperature > fan_on:
+        elif current_temperature >= fan_on:
 
             percent_fan = unlerp(fan_on, max_temp, current_temperature)
             target_speed = lerp(min_speed, 100, percent_fan)
 
-            if target_speed > current_speed:
+            if target_speed >= current_speed:
                 set_fan(target_speed)
                 current_speed = target_speed
             else:
-                target_speed -= max_acceleration * update_interval
-                set_fan(current_speed)
+                # only go down a little
+                new_target_speed = current_speed - max_acceleration * update_interval
+                # don't overshoot
+                target_speed = max(new_target_speed, target_speed)
+                set_fan(target_speed)
                 current_speed = target_speed
         time.sleep(update_interval)
 
