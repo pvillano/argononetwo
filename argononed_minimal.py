@@ -101,6 +101,11 @@ def temp_check():
                 target_speed = max(new_target_speed, target_speed)
                 set_fan(target_speed)
                 current_speed = target_speed
+        else:  # fan in critical zone
+            if current_speed != 0:
+                set_fan(min_speed)
+                current_speed = min_speed
+        print(current_temperature, current_speed)
         time.sleep(update_interval)
 
 
